@@ -1,4 +1,5 @@
 ckpts/
+results/
 wandb/
 core-pt_nccl_watchdg-*
-nohup.log
+*.log

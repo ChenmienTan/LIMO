@@ -15,7 +15,7 @@ def get_model_path(model_name, cache_dir, revision="main"):
     # this function return the path of the downloaded model
     path = cache_dir + "/models--" + model_name.replace("/", "--")
     if not os.path.exists(path):
-        return cache_path + "/" + model_name
+        return cache_dir + "/" + model_name
     with open(path + "/refs/" + revision) as f:
         uuid = f.read()
         return path + "/snapshots/" + uuid
@@ -24,25 +24,24 @@ def load_dataset(data):
 
     if data == "olympiadbench":
         return datasets.load_dataset(
-            "Hothan/OlympiadBench",
-            "OE_TO_maths_en_COMP",
-            split="train"
-        ).rename_column("question", "problem").map(lambda ex: {"solution": ex["solution"][0]})
-    elif data == "amc23":
-        return datasets.load_dataset(
-            "AI-MO/aime-validation-amc",
-            split="train"
-        ).rename_column("answer", "solution")
+            "math-ai/olympiadbench",
+            split="test"
+        ).rename_column("question", "problem").rename_column("answer", "solution")
     elif data == "aime24":
         return datasets.load_dataset(
-            "AI-MO/aime-validation-aime",
-            split="train"
+            "math-ai/aime24",
+            split="test"
         )
     elif data == "aime25":
         return datasets.load_dataset(
-            "TIGER-Lab/AIME25",
-            split="train"
-        ).rename_column("question", "problem").rename_column("answer", "solution")
+            "math-ai/aime25",
+            split="test"
+        ).rename_column("answer", "solution")
+    elif data == "gpqa":
+        return datasets.load_dataset(
+            "math-ai/gpqa",
+            split="test"
+        )
 
 @ray.remote
 def worker_main(args, prompts):
@@ -53,13 +52,13 @@ def worker_main(args, prompts):
         tensor_parallel_size=args.tp_size
     )
     sampling_params = SamplingParams(
-        n=args.n,
+        n=1,
         temperature=args.temperature,
         top_p=args.top_p,
         max_tokens=args.max_len
     )
     return [
-        [o.text for o in output.outputs]
+        output.outputs[0].text
         for output in llm.generate(prompts, sampling_params)
     ]
 
@@ -71,8 +70,8 @@ def main():
     parser.add_argument("--tp_size", type=int, default=1)
     parser.add_argument("--data", type=str)
 
-    # eval settings follow DeepSeek-R1
-    parser.add_argument("--n", type=int, default=4)
+    # eval setting follows DeepSeek-R1
+    parser.add_argument("--n", type=int, default=1) # for cost consideration
     parser.add_argument("--temperature", type=float, default=0.6)
     parser.add_argument("--top_p", type=float, default=0.95)
     parser.add_argument("--max_len", type=int, default=32768)
@@ -83,13 +82,13 @@ def main():
     print(json.dumps(vars(args), indent=4))
 
     dataset = load_dataset(args.data)
-    tokenizer = AutoTokenizer.from_pretrained(get_model_path(args.model_name, args.model_path))
+    tokenizer = AutoTokenizer.from_pretrained(get_model_path(args.model_name, args.cache_dir))
     prompts = [
         tokenizer.apply_chat_template(
             [{"content": ex["problem"], "role": "user"}],
             add_generation_prompt=True,
             tokenize=False
-        ) for ex in dataset
+        ) for ex in dataset for _ in range(args.n)
     ]
     dp_size = args.world_size // args.tp_size
     per_process_prompts = math.ceil(len(prompts) / dp_size)
@@ -104,13 +103,13 @@ def main():
     outputs = sum(outputs, [])
 
     data = []
-    for ex, output in zip(dataset, outputs):
+    for idx, ex in enumerate(dataset):
         solution = parse(ex["solution"])
         data.append({
             "problem": ex["problem"],
             "outputs": [
                 {"text": o, "label": verify(solution, parse(o))}
-                for o in output
+                for o in outputs[idx * args.n:(idx + 1) * args.n]
             ]
         })
 

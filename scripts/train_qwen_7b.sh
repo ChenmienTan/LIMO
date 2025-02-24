@@ -1,4 +1,6 @@
 # require 4 GPUs
+# pre-download model by executing
+# huggingface-cli download Qwen/Qwen2.5-7B-Instruct --cache-dir ckpts
 
 deepspeed --module openrlhf.cli.train_sft \
     --zero_stage 3 \

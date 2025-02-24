@@ -1,4 +1,6 @@
 # require 2 nodes
+# pre-download model by executing
+# huggingface-cli download Qwen/Qwen2.5-32B-Instruct --cache-dir ckpts
 
 export NCCL_IB_GID_INDEX=3
 export NCCL_IB_TIMEOUT=31
