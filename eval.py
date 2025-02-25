@@ -67,7 +67,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str)
     parser.add_argument("--cache_dir", type=str, default="ckpts")
-    parser.add_argument("--tp_size", type=int, default=1)
+    parser.add_argument("--tp_size", type=int, default=2)
     parser.add_argument("--data", type=str)
 
     # eval setting follows DeepSeek-R1

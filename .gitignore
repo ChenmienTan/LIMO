@@ -2,4 +2,4 @@ ckpts/
 results/
 wandb/
 core-pt_nccl_watchdg-*
-*.log
+nohup.out

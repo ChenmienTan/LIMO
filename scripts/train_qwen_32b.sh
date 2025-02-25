@@ -26,7 +26,7 @@ torchrun \
     --packing_samples \
     --max_epochs 15 \
     --micro_train_batch_size 1 \
-    --train_batch_size 16 \
+    --train_batch_size 32 \
     --learning_rate 5e-6 \
     --use_wandb <your_wandb_token> \
     --wandb_project limo \
