@@ -2,24 +2,22 @@
 # pre-download model by executing
 # huggingface-cli download Qwen/Qwen2.5-14B-Instruct --cache-dir ckpts
 
-deepspeed --module openrlhf.cli.train_sft \
-    --zero_stage 3 \
-    --ring_attn_size 2 \
-    --bf16 \
-    --flash_attn \
-    --gradient_checkpointing \
-    --pretrain <path_to_qwen_14b_instruct> \
-    --dataset limo.json \
-    --input_key instruction \
-    --output_key output \
-    --apply_chat_template \
-    --max_len 16384 \
-    --packing_samples \
-    --max_epochs 15 \
-    --micro_train_batch_size 1 \
-    --train_batch_size 32 \
-    --learning_rate 5e-6 \
-    --use_wandb <your_wandb_token> \
-    --wandb_project limo \
-    --wandb_run_name qwen2.5-14b \
-    --save_path ckpts/qwen2.5-14b-limo
+MODEL_PATH=ckpts/models--Qwen--Qwen2.5-14B-Instruct/snapshots/cf98f3b3bbb457ad9e2bb7baf9a0125b6b88caa8
+
+torchrun \
+    --standalone \
+    --nnodes=1 \
+    --nproc_per_node=8 \
+    -m verl.trainer.fsdp_sft_trainer \
+    model.enable_gradient_checkpointing=True \
+    ulysses_sequence_parallel_size=2 \
+    model.partial_pretrain=$MODEL_PATH \
+    data.train_files=limo.parquet \
+    data.max_length=16384 \
+    data.truncation=right \
+    use_remove_padding=True \
+    trainer.total_epochs=15 \
+    data.micro_batch_size_per_gpu=1 \
+    data.train_batch_size=32 \
+    optim.lr=5e-6 \
+    trainer.default_local_dir=ckpts/qwen-14b-limo

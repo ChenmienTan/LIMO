@@ -1,5 +1,5 @@
 ckpts/
+outputs/
 results/
-wandb/
-core-pt_nccl_watchdg-*
+core-pt_*
 nohup.out

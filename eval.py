@@ -26,20 +26,15 @@ def load_dataset(data):
         return datasets.load_dataset(
             "math-ai/olympiadbench",
             split="test"
-        ).rename_column("question", "problem").rename_column("answer", "solution")
+        ).rename_column("question", "problem")
     elif data == "aime24":
         return datasets.load_dataset(
             "math-ai/aime24",
             split="test"
-        )
+        ).rename_column("solution", "answer")
     elif data == "aime25":
         return datasets.load_dataset(
             "math-ai/aime25",
-            split="test"
-        ).rename_column("answer", "solution")
-    elif data == "gpqa":
-        return datasets.load_dataset(
-            "math-ai/gpqa",
             split="test"
         )
 
@@ -104,7 +99,7 @@ def main():
 
     data = []
     for idx, ex in enumerate(dataset):
-        solution = parse(ex["solution"])
+        solution = parse(ex["answer"])
         data.append({
             "problem": ex["problem"],
             "outputs": [
