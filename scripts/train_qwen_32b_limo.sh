@@ -25,4 +25,6 @@ torchrun \
     data.micro_batch_size_per_gpu=1 \
     data.train_batch_size=32 \
     optim.lr=5e-6 \
-    trainer.default_local_dir=ckpts/qwen-32b-limo
+    trainer.project_name=limo \
+    trainer.experiment_name=qwen2.5-32b \
+    trainer.default_local_dir=ckpts/qwen2.5-32b-limo

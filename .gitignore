@@ -1,5 +1,6 @@
 ckpts/
 outputs/
 results/
+wandb/
 core-pt_*
 nohup.out
